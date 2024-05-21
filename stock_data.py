@@ -56,6 +56,4 @@ class StockData:
         total_data = total_data.drop(columns=['datetime'])
         column_reshape = ['date', 'time', 'name', 'code', 'close', 'return']
         total_data = total_data[column_reshape]
-        print('*'*40)
-        print(total_data)
         self.total_data = total_data
