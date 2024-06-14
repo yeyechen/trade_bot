@@ -1,4 +1,5 @@
-class OrderArgs:
+class TradeArgs:
+    # ------------------------报单参数------------------------
     # 投资备注
     invest_message = {
         1: 'message1'
@@ -31,4 +32,15 @@ class OrderArgs:
         'best_bid_price_SZ': 'M5',  # 本方最优价(SZ)
         'best_ask_price_SZ': 'M6',  # 对手最优价(SZ)
         'best_five_immediate_or_cancel_SZ': 'M7',  # 最优五档即时成交剩余撤销委托(SZ)
+    }
+
+    # ------------------------撤单参数------------------------
+    cancel_types = {
+        'sys': 'cancel_sys',  # 合同编号
+        'id': 'cancel_id',  # 委托编号 (订单编号)
+    }
+
+    market = {
+        'SH': 'SH',
+        'SZ': 'SZ',
     }
