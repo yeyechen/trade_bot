@@ -6,13 +6,15 @@ from datetime import timedelta
 
 class StockData:
 
-    def __init__(self, stock_code, start_date, klt):
+    def __init__(self, stock_code, start_date=None):
         self.stock_code = stock_code
-        self.start_date = start_date
-        self.klt = klt
+        self.start_date = start_date  # optional
+
         self.today_data = None
         self.prev_data = None
         self.total_data = None
+
+        self.klt = 5
         self.columns_i = [0, 1, 2, 4, 10]
         self.columns_c = ['股票名称', '股票代码', '日期', '收盘', '涨跌幅']
         self.columns_e = ['name', 'code', 'datetime', 'close', 'return']
@@ -40,8 +42,17 @@ class StockData:
         # if Sunday, shift back to Friday
         if last_trading_day.weekday() == 6:
             last_trading_day = last_trading_day - timedelta(days=2)
+
         last_trading_day = last_trading_day.strftime('%Y%m%d')
-        prev_data = ef.stock.get_quote_history(self.stock_code, beg=self.start_date, end=last_trading_day, klt=self.klt)
+
+        # default behaviour
+        if self.start_date is None:
+            prev_data = ef.stock.get_quote_history(self.stock_code, beg=last_trading_day, end=last_trading_day,
+                                                   klt=self.klt)
+        else:
+            prev_data = ef.stock.get_quote_history(self.stock_code, beg=self.start_date, end=last_trading_day,
+                                                   klt=self.klt)
+
         prev_data = prev_data.iloc[:, self.columns_i]
         prev_data.columns = self.columns_e
         self.prev_data = prev_data

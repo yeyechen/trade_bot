@@ -80,37 +80,31 @@ class TestTimeDecorator(unittest.TestCase):
                 while True:
                     test_func()
 
+    def test_realtime(self):
+        """
+        example code
+        """
 
-'''
-example code
-'''
-if __name__ == '__main__':
-    today = datetime.today()
-    last_trading_day = datetime.today() - timedelta(days=1)
-    # if Sunday, shift back to Friday
-    if last_trading_day.weekday() == 6:
-        last_trading_day = last_trading_day - timedelta(days=2)
+        today = datetime.today()
+        last_trading_day = datetime.today() - timedelta(days=1)
+        # if Sunday, shift back to Friday
+        if last_trading_day.weekday() == 6:
+            last_trading_day = last_trading_day - timedelta(days=2)
 
-    klt = 5
-    StockDataArgs = {
-        'stock_code': '510050',
-        'start_date': last_trading_day.strftime('%Y%m%d'),
-        'klt': klt,
-    }
-    stock_data = StockData(**StockDataArgs)
+        klt = 5
+        StockDataArgs = {
+            'stock_code': '510050',
+            'start_date': last_trading_day.strftime('%Y%m%d'),
+            'klt': klt,
+        }
+        stock_data = StockData(**StockDataArgs)
 
+        @TimeDecorator
+        def func(stock):
+            stock()
+            print('*' * 40)
+            print(stock_data.total_data)
+            return stock_data.total_data
 
-    @TimeDecorator
-    def func(stock):
-        stock()
-        print('*' * 40)
-        print(stock_data.total_data)
-        return stock_data.total_data
-
-
-    while True:
-        calculating_data = func(stock_data)
-        ''' 
-        trading logic below
-            ...
-        '''
+        while True:
+            calculating_data = func(stock_data)
