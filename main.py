@@ -1,9 +1,7 @@
-import os
-
-from stock_data import StockData
-from order import Order
+from market_data import MarketData
 from time_decorator import TimeDecorator
-from trade_args import TradeArgs
+from logic_calc import logic_calculator
+from position import StockPosition, FuturePosition
 
 
 @TimeDecorator
@@ -15,32 +13,26 @@ def request_data(stock_data_obj):
 
 
 if __name__ == '__main__':
-    # -------------------------order generation-------------------------
-    order_args = {
-        'invest_message': TradeArgs.invest_message.get(1),
-        'order_type': TradeArgs.order_types.get('security_buy_in'),
-        'bid_type': TradeArgs.bid_types.get('latest'),
-        'order_price': 2.55,
-        'ticker': 'SH510050',
-        'order_volume': 1000,
-        'strategy_name': 'yuan',
-        'order_txt_init': 'signal',
-        'capital_number': 2006683,
-        'capital_type': 2,
-    }
 
-    order1 = Order(**order_args)
-
-    # root_path = 'D:/trading_mid_file'
-    root_path = os.getcwd()
-    order1.place_order(root_path)
-
-    # -------------------------data retrieve-------------------------
-
-    stock_data = StockData(stock_code='510050')
+    stock_data = MarketData(code='510050')
+    stock_data()
+    future_data = MarketData(code='IM2407', is_future=True)
+    future_data()
 
     while True:
 
+        # ------------------------position constraint-----------------------
+        stock_position = StockPosition(2006683, 2)
+        future_position = FuturePosition(1006107, 1)
+
+        # --------------------------data retrieve---------------------------
         calculating_data = request_data(stock_data)
+        latest_price = calculating_data.iloc[-1]['close']
 
+        # -------------------------order generation-------------------------
+        signal = logic_calculator(calculating_data)
+        future_target_positions = {'IF2407': (1, 5000, 0.4)}
+        future_position.execute_target_positions(future_target_positions)
 
+        target_positions = {'SH510050': (500, latest_price, 0.02)}
+        stock_position.execute_target_positions(target_positions)
