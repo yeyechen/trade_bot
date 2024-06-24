@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 
 from order import Order
-from position_constraint_decorators import PositionConstraint
+from position_constraint_decorators import PositionConstraint as constraint
 from trade_args import TradeArgs
 
 
@@ -48,7 +48,7 @@ class StockPosition:
         df = pd.read_csv(path, encoding='GBK')
         return df.iloc[0, 1]
 
-    @PositionConstraint.check_availability_long
+    @constraint.long_stock_availability
     def single_ticker_long(self, ticker, order_volume, order_price, price_drift):
 
         order_args = {
@@ -66,7 +66,7 @@ class StockPosition:
         order = Order(**order_args)
         order.place_order()
 
-    @PositionConstraint.check_availability_short
+    @constraint.short_stock_availability
     def single_ticker_short(self, ticker, order_volume, order_price, price_drift):
 
         order_args = {
@@ -87,6 +87,7 @@ class StockPosition:
     def execute_target_positions(self, targets: dict):
         # ticker_str: SH510050
         # ticker: 510050
+        # todo: simplify ticker str issue?
         for ticker_str, target_price_tuple in targets.items():
             ticker = ticker_str[2:]
             target_holding = target_price_tuple[0]
@@ -162,11 +163,59 @@ class FuturePosition:
         df = pd.read_csv(path, encoding='GBK')
         return df.iloc[0, 2]
 
-    def single_ticker_long(self, ticker, target_holding, order_price, price_drift):
-        pass
+    @constraint.long_future_availability
+    def single_ticker_long(self, ticker, order_volume, order_price, price_drift):
+        order_args = {
+            'invest_message': '',
+            'order_type': TradeArgs.order_types.get('future_buy_in'),
+            'bid_type': TradeArgs.bid_types.get('specified'),
+            'order_price': round(order_price - price_drift, 3),
+            'ticker': ticker,
+            'order_volume': order_volume,
+            'strategy_name': '',
+            'capital_number': self.capital_number,
+            'capital_type': self.capital_type,
+        }
 
-    def single_ticker_short(self, ticker, target_holding, order_price, price_drift):
-        pass
+        order = Order(**order_args)
+        order.place_order()
+
+    @constraint.short_future_availability
+    def single_ticker_short(self, ticker, order_volume, order_price, price_drift):
+        order_args = {
+            'invest_message': '',
+            'order_type': TradeArgs.order_types.get('future_sell_out'),
+            'bid_type': TradeArgs.bid_types.get('specified'),
+            'order_price': round(order_price - price_drift, 3),
+            'ticker': ticker,
+            'order_volume': order_volume,
+            'strategy_name': '',
+            'capital_number': self.capital_number,
+            'capital_type': self.capital_type,
+        }
+
+        order = Order(**order_args)
+        order.place_order()
 
     def execute_target_positions(self, targets: dict):
-        pass
+        for ticker, target_price_tuple in targets.items():
+            target_holding = target_price_tuple[0]
+            order_price = target_price_tuple[1]
+            price_drift = target_price_tuple[2]
+
+            # target ticker is not in previous position, long
+            if ticker not in self.position_data:
+                self.single_ticker_long(ticker, target_holding, order_price, price_drift)
+                continue
+
+            ticker_data = self.position_data.get(ticker)
+            curr_holding = ticker_data.get('holding')
+
+            target_execute_mark = np.sign(target_holding - curr_holding)
+            actions = {
+                1: lambda: self.single_ticker_long(ticker, target_holding - curr_holding, order_price, price_drift),
+                -1: lambda: self.single_ticker_short(ticker, curr_holding - target_holding, order_price, price_drift),
+                0: lambda: print('target position has been executed')
+            }
+            action_chose = actions[target_execute_mark]
+            action_chose()

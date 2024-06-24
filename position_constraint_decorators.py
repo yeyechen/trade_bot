@@ -4,7 +4,7 @@ from functools import wraps
 class PositionConstraint:
 
     @staticmethod
-    def check_availability_long(func):
+    def long_stock_availability(func):
         @wraps(func)
         def wrapper(instance, *args, **kwargs):
             ticker = kwargs.get('ticker') if 'ticker' in kwargs else args[0]
@@ -22,7 +22,7 @@ class PositionConstraint:
         return wrapper
 
     @staticmethod
-    def check_availability_short(func):
+    def short_stock_availability(func):
         @wraps(func)
         def wrapper(instance, *args, **kwargs):
             ticker = kwargs.get('ticker') if 'ticker' in kwargs else args[0]
@@ -46,3 +46,11 @@ class PositionConstraint:
             return func(instance, *args, **kwargs)
 
         return wrapper
+
+    @staticmethod
+    def long_future_availability(func):
+        pass
+
+    @staticmethod
+    def short_future_availability(func):
+        pass
